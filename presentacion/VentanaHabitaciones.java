@@ -1,0 +1,130 @@
+package presentacion;
+import persistencia.*;
+
+import dominio.Hotel;
+import dominio.Habitacion;
+import dominio.Sencilla;
+import dominio.EstadoHabitacion;
+import javax.swing.*;
+import java.awt.*;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+
+
+public class VentanaHabitaciones extends JDialog {
+    private Hotel hotel;
+    private JTextField txtNumero, txtPrecio, txtPiso;
+    private JComboBox<EstadoHabitacion> cmbEstado;
+    private JTextArea txtAreaOutput;
+
+    public VentanaHabitaciones(JFrame padre, Hotel hotel) {
+        super(padre, "Gestión de Habitaciones", true);
+        this.hotel = hotel;
+        configurarComponentes();
+    }
+
+    private void configurarComponentes() {
+        setSize(550, 450);
+        setLocationRelativeTo(getOwner());
+        setLayout(new BorderLayout());
+
+        JPanel pnlForm = new JPanel(new GridLayout(4, 2, 5, 5));
+        pnlForm.setBorder(BorderFactory.createTitledBorder("Datos de Habitación"));
+
+        pnlForm.add(new JLabel("Número Habitación:"));
+        txtNumero = new JTextField(); pnlForm.add(txtNumero);
+
+        pnlForm.add(new JLabel("Precio base por Noche ($):"));
+        txtPrecio = new JTextField("50000"); pnlForm.add(txtPrecio);
+
+        pnlForm.add(new JLabel("Piso / Planta:"));
+        txtPiso = new JTextField("1"); pnlForm.add(txtPiso);
+
+        pnlForm.add(new JLabel("Estado Inicial:"));
+        cmbEstado = new JComboBox<>(EstadoHabitacion.values());
+        pnlForm.add(cmbEstado);
+        add(pnlForm, BorderLayout.NORTH);
+
+        txtAreaOutput = new JTextArea();
+        txtAreaOutput.setEditable(false);
+        add(new JScrollPane(txtAreaOutput), BorderLayout.CENTER);
+
+        JPanel pnlBotones = new JPanel(new FlowLayout());
+        JButton btnReg = new JButton("Registrar Sencilla");
+        JButton btnEdit = new JButton("Editar Precio");
+        JButton btnElim = new JButton("Eliminar");
+        JButton btnDisp = new JButton("Consultar Disponibilidad");
+
+        pnlBotones.add(btnReg);
+        pnlBotones.add(btnEdit);
+        pnlBotones.add(btnElim);
+        pnlBotones.add(btnDisp);
+        add(pnlBotones, BorderLayout.SOUTH);
+
+        btnReg.addActionListener(e -> registrarHabitacion());
+        btnEdit.addActionListener(e -> editarHabitacion());
+        btnElim.addActionListener(e -> eliminarHabitacion());
+        btnDisp.addActionListener(e -> consultarDisponibilidad());
+    }
+
+    // --- MÉTODOS EXIGIDOS POR EL DIAGRAMA UML ---
+
+    public void registrarHabitacion() {
+        try {
+            BigDecimal precio = new BigDecimal(txtPrecio.getText());
+            int piso = Integer.parseInt(txtPiso.getText());
+            // Instanciamos Sencilla por defecto técnico
+            Sencilla hab = new Sencilla(txtNumero.getText(), "Habitación Estándar", precio, 
+                    (EstadoHabitacion) cmbEstado.getSelectedItem(), 2, piso, new ArrayList<>(), true);
+            
+            hotel.registrarHabitacion(hab);
+            txtAreaOutput.setText("Habitación " + hab.getNumeroHabitacion() + " inyectada correctamente.");
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error en formato numérico.");
+        }
+    }
+
+    // Reemplazar estos métodos en tu VentanaHabitaciones.java:
+
+    public void editarHabitacion() {
+        HabitacionDAO habitacionDAO = new HabitacionDAO("habitaciones.dat", MetodoPersistencia.SERIALIZACION);
+
+        // Buscar la entidad real en la persistencia binaria
+        Habitacion h = habitacionDAO.buscarPorId(txtNumero.getText());
+        if (h != null) {
+            try {
+                h.setPrecioPorNoche(new BigDecimal(txtPrecio.getText()));
+                // Al guardar, el DAO re-serializa automáticamente todo el inventario en disco
+                habitacionDAO.guardar(h); 
+                txtAreaOutput.setText("Tarifa actualizada con éxito: $" + h.getPrecioPorNoche() + " para la Habitación " + h.getNumeroHabitacion());
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "Formato de precio inválido.");
+            }
+        } else {
+            JOptionPane.showMessageDialog(this, "Habitación no encontrada en los registros físicos.");
+        }
+    }
+
+    public void eliminarHabitacion() {
+        HabitacionDAO habitacionDAO = new HabitacionDAO("habitaciones.dat", MetodoPersistencia.SERIALIZACION);
+
+        boolean removido = habitacionDAO.eliminar(txtNumero.getText());
+        if (removido) {
+            txtAreaOutput.setText("Habitación Nº " + txtNumero.getText() + " removida permanentemente del inventario.");
+        } else {
+            JOptionPane.showMessageDialog(this, "Número de habitación inexistente.");
+        }
+    }
+
+    public void consultarDisponibilidad() {
+        java.util.List<Habitacion> libres = hotel.consultarHabitacionesDisponibles("TODAS");
+        StringBuilder sb = new StringBuilder("=== HABITACIONES DISPONIBLES EN EL SISTEMA ===\n");
+        for (Habitacion h : libres) {
+            sb.append("Habitación Nº: ").append(h.getNumeroHabitacion())
+              .append(" | Tipo: ").append(h.getClass().getSimpleName())
+              .append(" | Tarifa Base: $").append(h.getPrecioPorNoche()).append("\n");
+        }
+        if (libres.isEmpty()) sb.append("Sin disponibilidad de habitaciones actualmente.");
+        txtAreaOutput.setText(sb.toString());
+    }
+}
