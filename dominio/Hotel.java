@@ -26,6 +26,10 @@ public class Hotel {
     private ArrayList<Reserva> reservas; 
     private ArrayList<ServicioHotel> servicios; 
 
+    // Persistencia configurable
+    private MetodoPersistencia metodoPersistencia = MetodoPersistencia.SERIALIZACION;
+    private String carpetaDatos = ""; // opción para prefijo de ruta si se desea
+
     public Hotel(String idHotel, String nombre, String direccion, String telefono) {
         this.idHotel = idHotel; 
         this.nombre = nombre; 
@@ -39,19 +43,45 @@ public class Hotel {
     }
 
     /**
+     * Construye el nombre de archivo apropiado según la estrategia de persistencia.
+     */
+    private String archivoPara(String base) {
+        String ext;
+        switch (this.metodoPersistencia) {
+            case ARCHIVO_BINARIO -> ext = ".bin";
+            case ARCHIVO_TXT -> ext = ".txt";
+            default -> ext = ".dat"; // SERIALIZACION
+        }
+        return (this.carpetaDatos == null || this.carpetaDatos.isEmpty()) ? base + ext : this.carpetaDatos + base + ext;
+    }
+
+    /**
      * Sincroniza dinámicamente los ArrayList de la clase con el estado actual
      * de los DAOs y el almacenamiento físico en disco.
      */
     private void refrescarDesdePersistencia() {
-        ClienteDAO clienteDAO = new ClienteDAO("clientes.dat", MetodoPersistencia.SERIALIZACION);
-        HabitacionDAO habitacionDAO = new HabitacionDAO("habitaciones.dat", MetodoPersistencia.SERIALIZACION);
-        ReservaDAO reservaDAO = new ReservaDAO("reservas.dat", MetodoPersistencia.SERIALIZACION);
-        ServicioDAO servicioDAO = new ServicioDAO("servicios.dat", MetodoPersistencia.SERIALIZACION);
+        ClienteDAO clienteDAO = new ClienteDAO(archivoPara("clientes"), this.metodoPersistencia);
+        HabitacionDAO habitacionDAO = new HabitacionDAO(archivoPara("habitaciones"), this.metodoPersistencia);
+        ReservaDAO reservaDAO = new ReservaDAO(archivoPara("reservas"), this.metodoPersistencia);
+        ServicioDAO servicioDAO = new ServicioDAO(archivoPara("servicios"), this.metodoPersistencia);
 
         this.clientes = new ArrayList<>(clienteDAO.listarTodo());
         this.habitaciones = new ArrayList<>(habitacionDAO.listarTodo());
         this.reservas = new ArrayList<>(reservaDAO.listarTodo());
         this.servicios = new ArrayList<>(servicioDAO.listarTodo());
+    }
+
+    // Permite cambiar la estrategia en tiempo de ejecución y recargar desde disco
+    public void setMetodoPersistencia(MetodoPersistencia metodo) {
+        if (metodo == null) return;
+        this.metodoPersistencia = metodo;
+        refrescarDesdePersistencia();
+    }
+
+    public MetodoPersistencia getMetodoPersistencia() { return this.metodoPersistencia; }
+
+    public void setCarpetaDatos(String carpeta) {
+        this.carpetaDatos = carpeta == null ? "" : carpeta;
     }
 
     // --- MÉTODOS DE REGISTRO Y PERSISTENCIA ---
@@ -60,7 +90,7 @@ public class Hotel {
         refrescarDesdePersistencia();
         if (cliente != null && buscarCliente(cliente.obtenerIdentificacion()) == null) {
             this.clientes.add(cliente);
-            ClienteDAO dao = new ClienteDAO("clientes.dat", MetodoPersistencia.SERIALIZACION);
+            ClienteDAO dao = new ClienteDAO(archivoPara("clientes"), this.metodoPersistencia);
             dao.guardar(cliente);
         }
     }
@@ -69,7 +99,7 @@ public class Hotel {
         refrescarDesdePersistencia();
         if (habitacion != null && buscarHabitacion(habitacion.getNumeroHabitacion()) == null) {
             this.habitaciones.add(habitacion);
-            HabitacionDAO dao = new HabitacionDAO("habitaciones.dat", MetodoPersistencia.SERIALIZACION);
+            HabitacionDAO dao = new HabitacionDAO(archivoPara("habitaciones"), this.metodoPersistencia);
             dao.guardar(habitacion);
         }
     }
@@ -78,7 +108,7 @@ public class Hotel {
         refrescarDesdePersistencia();
         if (reserva != null && buscarReserva(reserva.getIdReserva()) == null) {
             this.reservas.add(reserva);
-            ReservaDAO dao = new ReservaDAO("reservas.dat", MetodoPersistencia.SERIALIZACION);
+            ReservaDAO dao = new ReservaDAO(archivoPara("reservas"), this.metodoPersistencia);
             dao.guardar(reserva);
         }
     }
@@ -87,7 +117,7 @@ public class Hotel {
         refrescarDesdePersistencia();
         if (servicio != null && buscarServicio(servicio.getIdServicio()) == null) {
             this.servicios.add(servicio);
-            ServicioDAO dao = new ServicioDAO("servicios.dat", MetodoPersistencia.SERIALIZACION);
+            ServicioDAO dao = new ServicioDAO(archivoPara("servicios"), this.metodoPersistencia);
             dao.guardar(servicio);
         }
     }
@@ -96,21 +126,21 @@ public class Hotel {
 
     public boolean modificarCliente(Cliente cliente) {
         if (cliente == null) return false;
-        ClienteDAO dao = new ClienteDAO("clientes.dat", MetodoPersistencia.SERIALIZACION);
+        ClienteDAO dao = new ClienteDAO(archivoPara("clientes"), this.metodoPersistencia);
         dao.guardar(cliente); // guardar() actualiza o inserta
         refrescarDesdePersistencia();
         return true;
     }
 
     public boolean eliminarCliente(String id) {
-        ClienteDAO dao = new ClienteDAO("clientes.dat", MetodoPersistencia.SERIALIZACION);
+        ClienteDAO dao = new ClienteDAO(archivoPara("clientes"), this.metodoPersistencia);
         boolean res = dao.eliminar(id);
         refrescarDesdePersistencia();
         return res;
     }
 
     public boolean eliminarHabitacion(String numero) {
-        HabitacionDAO dao = new HabitacionDAO("habitaciones.dat", MetodoPersistencia.SERIALIZACION);
+        HabitacionDAO dao = new HabitacionDAO(archivoPara("habitaciones"), this.metodoPersistencia);
         boolean res = dao.eliminar(numero);
         refrescarDesdePersistencia();
         return res;
@@ -120,14 +150,14 @@ public class Hotel {
         Habitacion h = buscarHabitacion(numero);
         if (h == null) return false;
         h.setPrecioPorNoche(nuevoPrecio);
-        HabitacionDAO dao = new HabitacionDAO("habitaciones.dat", MetodoPersistencia.SERIALIZACION);
+        HabitacionDAO dao = new HabitacionDAO(archivoPara("habitaciones"), this.metodoPersistencia);
         dao.guardar(h);
         refrescarDesdePersistencia();
         return true;
     }
 
     public boolean eliminarReserva(String id) {
-        ReservaDAO dao = new ReservaDAO("reservas.dat", MetodoPersistencia.SERIALIZACION);
+        ReservaDAO dao = new ReservaDAO(archivoPara("reservas"), this.metodoPersistencia);
         boolean res = dao.eliminar(id);
         refrescarDesdePersistencia();
         return res;
@@ -137,7 +167,7 @@ public class Hotel {
         Reserva r = buscarReserva(id);
         if (r == null) return false;
         r.cancelarReserva();
-        ReservaDAO dao = new ReservaDAO("reservas.dat", MetodoPersistencia.SERIALIZACION);
+        ReservaDAO dao = new ReservaDAO(archivoPara("reservas"), this.metodoPersistencia);
         dao.guardar(r);
         refrescarDesdePersistencia();
         return true;
@@ -148,9 +178,9 @@ public class Hotel {
         Habitacion h = buscarHabitacion(numeroHabitacion);
         if (r == null || h == null) return false;
         r.asignarHabitacion(h);
-        ReservaDAO dao = new ReservaDAO("reservas.dat", MetodoPersistencia.SERIALIZACION);
+        ReservaDAO dao = new ReservaDAO(archivoPara("reservas"), this.metodoPersistencia);
         dao.guardar(r);
-        HabitacionDAO hdao = new HabitacionDAO("habitaciones.dat", MetodoPersistencia.SERIALIZACION);
+        HabitacionDAO hdao = new HabitacionDAO(archivoPara("habitaciones"), this.metodoPersistencia);
         hdao.guardar(h);
         refrescarDesdePersistencia();
         return true;
@@ -158,19 +188,19 @@ public class Hotel {
 
     public boolean agregarServicioAReserva(String idReserva, String idServicioStr) {
         Reserva r = buscarReserva(idReserva);
-        ServicioDAO sdao = new ServicioDAO("servicios.dat", MetodoPersistencia.SERIALIZACION);
+        ServicioDAO sdao = new ServicioDAO(archivoPara("servicios"), this.metodoPersistencia);
         ServicioHotel s = sdao.buscarPorId(idServicioStr);
         if (r == null || s == null) return false;
         ConsumoServicio cs = new ConsumoServicio("CON-" + (System.currentTimeMillis() % 1000), LocalDate.now(), 1, "Consumo desde UI", s);
         r.agregarServicio(cs);
-        ReservaDAO rdao = new ReservaDAO("reservas.dat", MetodoPersistencia.SERIALIZACION);
+        ReservaDAO rdao = new ReservaDAO(archivoPara("reservas"), this.metodoPersistencia);
         rdao.guardar(r);
         refrescarDesdePersistencia();
         return true;
     }
 
     public boolean actualizarCostoServicio(String idServicioStr, BigDecimal nuevoCosto) {
-        ServicioDAO sdao = new ServicioDAO("servicios.dat", MetodoPersistencia.SERIALIZACION);
+        ServicioDAO sdao = new ServicioDAO(archivoPara("servicios"), this.metodoPersistencia);
         ServicioHotel s = sdao.buscarPorId(idServicioStr);
         if (s == null) return false;
         s.setCosto(nuevoCosto);
@@ -180,7 +210,7 @@ public class Hotel {
     }
 
     public boolean eliminarServicio(String idServicioStr) {
-        ServicioDAO sdao = new ServicioDAO("servicios.dat", MetodoPersistencia.SERIALIZACION);
+        ServicioDAO sdao = new ServicioDAO(archivoPara("servicios"), this.metodoPersistencia);
         boolean res = sdao.eliminar(idServicioStr);
         refrescarDesdePersistencia();
         return res;
