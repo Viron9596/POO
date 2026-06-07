@@ -1,10 +1,9 @@
 package presentacion;
 
 import dominio.Hotel;
+import persistencia.MetodoPersistencia;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class SistemaHotelGUI extends JFrame {
     private Hotel hotel;
@@ -17,7 +16,7 @@ public class SistemaHotelGUI extends JFrame {
 
     private void configurarVentana() {
         setTitle("Sistema de Gestión Hotelera - " + hotel.getNombre());
-        setSize(500, 400);
+        setSize(600, 420);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
@@ -49,12 +48,37 @@ public class SistemaHotelGUI extends JFrame {
 
         add(panelBotones, BorderLayout.CENTER);
 
+        // Panel de ajustes: persistencia y carpeta de datos
+        JPanel pnlSettings = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        pnlSettings.setBorder(BorderFactory.createTitledBorder("Ajustes de Persistencia"));
+        JComboBox<MetodoPersistencia> cmbPersist = new JComboBox<>(MetodoPersistencia.values());
+        cmbPersist.setSelectedItem(hotel.getMetodoPersistencia());
+        JTextField txtFolder = new JTextField(18);
+        txtFolder.setToolTipText("Carpeta donde están los archivos de datos (opcional)");
+        JButton btnApply = new JButton("Aplicar");
+
+        pnlSettings.add(new JLabel("Estrategia:"));
+        pnlSettings.add(cmbPersist);
+        pnlSettings.add(new JLabel("Carpeta datos:"));
+        pnlSettings.add(txtFolder);
+        pnlSettings.add(btnApply);
+
+        add(pnlSettings, BorderLayout.SOUTH);
+
         // Listeners vinculados estrictamente a los métodos obligatorios del UML
         btnClientes.addActionListener(e -> abrirGestionClientes());
         btnHabitaciones.addActionListener(e -> abrirGestionHabitaciones());
         btnReservas.addActionListener(e -> abrirGestionReservas());
         btnServicios.addActionListener(e -> abrirGestionServicios());
         btnFacturacion.addActionListener(e -> abrirFacturacion());
+
+        btnApply.addActionListener(e -> {
+            MetodoPersistencia sel = (MetodoPersistencia) cmbPersist.getSelectedItem();
+            String carpeta = txtFolder.getText().trim();
+            hotel.setCarpetaDatos(carpeta);
+            hotel.setMetodoPersistencia(sel);
+            JOptionPane.showMessageDialog(this, "Persistencia aplicada: " + sel + "\nCarpeta: '" + (carpeta.isEmpty() ? "(raíz)" : carpeta) + "'", "Persistencia", JOptionPane.INFORMATION_MESSAGE);
+        });
     }
 
     // --- MÉTODOS EXIGIDOS POR EL DIAGRAMA UML ---
