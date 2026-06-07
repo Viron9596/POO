@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package dominio;
 
 import java.math.BigDecimal;
@@ -9,6 +5,7 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.io.Serializable;
+import java.util.Iterator;
 
 public class Reserva implements Serializable {
     private String idReserva;
@@ -64,10 +61,12 @@ public class Reserva implements Serializable {
     }
 
     public boolean removerHabitacion(String numeroHabitacion) {
-        for (Habitacion hab : habitaciones) {
+        Iterator<Habitacion> it = habitaciones.iterator();
+        while (it.hasNext()) {
+            Habitacion hab = it.next();
             if (hab.getNumeroHabitacion().equals(numeroHabitacion)) {
                 hab.cambiarEstado(EstadoHabitacion.DISPONIBLE);
-                habitaciones.remove(hab);
+                it.remove(); // seguro al usar iterator
                 calcularCostoFinal();
                 return true;
             }
@@ -108,52 +107,57 @@ public class Reserva implements Serializable {
     public BigDecimal calcularSubtotalServicios() {
         BigDecimal suma = BigDecimal.ZERO;
         for (ConsumoServicio cs : consumosServicios) {
-            suma = suma.add(cs.getSubtotal());
+            // Aseguramos que subtotal esté actualizado
+            suma = suma.add(cs.getSubtotal() != null ? cs.getSubtotal() : BigDecimal.ZERO);
         }
         this.subtotalServicios = suma;
         return this.subtotalServicios;
     }
 
     public void calcularCostoFinal() {
-    // 1. (Tu lógica actual) Sumas los costos bases de tus listas de habitaciones y servicios
-    BigDecimal subtotalGeneral = BigDecimal.ZERO; 
-    
-    for (Habitacion hab : habitaciones) {
-        subtotalGeneral = subtotalGeneral.add(hab.calcularCosto(numeroNoches));
+        // Calcular subtotales actualizados
+        BigDecimal subtotalHab = BigDecimal.ZERO;
+        for (Habitacion hab : habitaciones) {
+            subtotalHab = subtotalHab.add(hab.calcularCosto(numeroNoches));
+        }
+        this.subtotalHabitaciones = subtotalHab;
+
+        // Calcular subtotal de servicios
+        this.subtotalServicios = calcularSubtotalServicios();
+
+        // Descuento: aplicar sobre el total (habitaciones + servicios)
+        BigDecimal subtotalGeneral = this.subtotalHabitaciones.add(this.subtotalServicios);
+
+        this.descuentoAplicado = (this.cliente != null) ? this.cliente.calcularDescuento(subtotalGeneral) : BigDecimal.ZERO;
+
+        this.costoFinal = subtotalGeneral.subtract(this.descuentoAplicado);
     }
-    this.subtotalHabitaciones = subtotalGeneral;
-   
-    this.descuentoAplicado = this.cliente.calcularDescuento(subtotalGeneral);
-    
-    // La resta final se hace directamente entre objetos BigDecimal
-    this.costoFinal = subtotalGeneral.subtract(this.descuentoAplicado);
-}
 
     public Factura generarFactura() {
         calcularCostoFinal();
-        
+
         String idFact = "FAC-" + this.idReserva;
         LocalDate emision = LocalDate.now();
         String nomCli = (this.cliente != null) ? this.cliente.obtenerNombreCompleto() : "Anonimo";
         String idenCli = (this.cliente != null) ? this.cliente.obtenerIdentificacion() : "N/A";
-        
+
         ArrayList<String> detHab = new ArrayList<>();
         for (Habitacion h : habitaciones) {
             detHab.add("Habitacion " + h.getNumeroHabitacion() + " (" + h.getClass().getSimpleName() + ") x" + numeroNoches + " noches");
         }
-        
+
         ArrayList<String> detServ = new ArrayList<>();
         for (ConsumoServicio cs : consumosServicios) {
             detServ.add(cs.getServicio().getNombre() + " x" + cs.getCantidad() + " ($" + cs.getSubtotal() + ")");
         }
-        
+
         BigDecimal sub = this.subtotalHabitaciones.add(this.subtotalServicios);
         // Generamos un impuesto informativo estándar del 19% (IVA) aplicable sobre el neto
         BigDecimal imp = sub.subtract(this.descuentoAplicado)
                     .multiply(new BigDecimal("0.19"))
                     .setScale(2, RoundingMode.HALF_UP);
         BigDecimal tot = sub.subtract(this.descuentoAplicado).add(imp);
-        
+
         return new Factura(idFact, emision, nomCli, idenCli, detHab, detServ, sub, this.descuentoAplicado, imp, tot);
     }
 

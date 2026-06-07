@@ -7,7 +7,7 @@ import java.util.List;
 
 public class ServicioDAO extends DAOBase implements IDAO<ServicioHotel> {
     
-    private static List<ServicioHotel> memoriaServicios = new ArrayList<>();
+    private List<ServicioHotel> memoriaServicios = new ArrayList<>();
 
     public ServicioDAO(String rutaArchivo, MetodoPersistencia metodoPersistencia) {
         super(rutaArchivo, metodoPersistencia);

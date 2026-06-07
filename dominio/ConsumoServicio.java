@@ -38,7 +38,7 @@ public class ConsumoServicio {
     public void setFechaConsumo(LocalDate fechaConsumo) { this.fechaConsumo = fechaConsumo; }
     public int getCantidad() { return cantidad; }
     public void setCantidad(int cantidad) { this.cantidad = cantidad; }
-    public String getObservations() { return observaciones; }
+    public String getObservaciones() { return observaciones; }
     public void setObservaciones(String observaciones) { this.observaciones = observaciones; }
     public BigDecimal getSubtotal() { return subtotal; }
     public void setSubtotal(BigDecimal subtotal) { this.subtotal = subtotal; }

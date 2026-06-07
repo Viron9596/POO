@@ -7,7 +7,7 @@ import java.util.List;
 
 public class ReservaDAO extends DAOBase implements IDAO<Reserva> {
     
-    private static List<Reserva> memoriaReservas = new ArrayList<>();
+    private List<Reserva> memoriaReservas = new ArrayList<>();
 
     public ReservaDAO(String rutaArchivo, MetodoPersistencia metodoPersistencia) {
         super(rutaArchivo, metodoPersistencia);

@@ -1,25 +1,22 @@
 package dominio;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
 public class ClienteHabitual implements IFidelidad {
-    private double porcentajeDescuento;
+    private BigDecimal porcentajeDescuento;
     private int puntosAcumulados;
 
-    public ClienteHabitual(double porcentajeDescuento, int puntosAcumulados) {
+    public ClienteHabitual(BigDecimal porcentajeDescuento, int puntosAcumulados) {
         this.porcentajeDescuento = porcentajeDescuento;
         this.puntosAcumulados = puntosAcumulados;
     }
 
     @Override
     public BigDecimal calcularDescuento(BigDecimal subtotal) {
-        // Convertimos el porcentaje a BigDecimal de forma segura
-        BigDecimal porcentaje = BigDecimal.valueOf(this.porcentajeDescuento);
+        if (porcentajeDescuento == null) return BigDecimal.ZERO;
         BigDecimal cien = new BigDecimal("100");
-        
-        // Operación: (subtotal * porcentaje) / 100
-        // Seteamos escala a 2 decimales y redondeo simétrico (HALF_UP)
-        return subtotal.multiply(porcentaje)
+        return subtotal.multiply(porcentajeDescuento)
                        .divide(cien, 2, RoundingMode.HALF_UP);
     }
 
@@ -29,8 +26,8 @@ public class ClienteHabitual implements IFidelidad {
     }
 
     // Getters y Setters necesarios para la gestión interna de la estrategia
-    public double getPorcentajeDescuento() { return porcentajeDescuento; }
-    public void setPorcentajeDescuento(double porcentajeDescuento) { this.porcentajeDescuento = porcentajeDescuento; }
+    public BigDecimal getPorcentajeDescuento() { return porcentajeDescuento; }
+    public void setPorcentajeDescuento(BigDecimal porcentajeDescuento) { this.porcentajeDescuento = porcentajeDescuento; }
     public int getPuntosAcumulados() { return puntosAcumulados; }
     public void setPuntosAcumulados(int puntosAcumulados) { this.puntosAcumulados = puntosAcumulados; }
 }

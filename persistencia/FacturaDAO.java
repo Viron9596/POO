@@ -7,7 +7,7 @@ import java.util.List;
 
 public class FacturaDAO extends DAOBase implements IDAO<Factura> {
     
-    private static List<Factura> memoriaFacturas = new ArrayList<>();
+    private List<Factura> memoriaFacturas = new ArrayList<>();
 
     public FacturaDAO(String rutaArchivo, MetodoPersistencia metodoPersistencia) {
         super(rutaArchivo, metodoPersistencia);

@@ -7,8 +7,8 @@ import java.util.List;
 
 public class HabitacionDAO extends DAOBase implements IDAO<Habitacion> {
     
-    // Lista estática compartida por todas las instancias
-    private static List<Habitacion> memoriaHabitaciones = new ArrayList<>();
+    // Lista por instancia (no compartida entre instancias)
+    private List<Habitacion> memoriaHabitaciones = new ArrayList<>();
 
     public HabitacionDAO(String rutaArchivo, MetodoPersistencia metodoPersistencia) {
         super(rutaArchivo, metodoPersistencia);

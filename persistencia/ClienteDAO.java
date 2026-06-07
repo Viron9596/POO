@@ -7,8 +7,8 @@ import java.util.List;
 
 public class ClienteDAO extends DAOBase implements IDAO<Cliente> {
     
-    // 1. ATENCIÓN: Al hacerlo 'static', todas las instancias comparten la misma RAM temporal
-    private static List<Cliente> memoriaClientes = new ArrayList<>();
+    // Lista por instancia (no compartida entre instancias) para evitar estado global impredecible
+    private List<Cliente> memoriaClientes = new ArrayList<>();
 
     public ClienteDAO(String rutaArchivo, MetodoPersistencia metodoPersistencia) {
         super(rutaArchivo, metodoPersistencia);
@@ -24,9 +24,6 @@ public class ClienteDAO extends DAOBase implements IDAO<Cliente> {
         eliminar(cliente.obtenerIdentificacion());
         memoriaClientes.add(cliente);
         
-        // =======================================================
-        // ¡AQUÍ TU ENUM COBRA VIDA!
-        // =======================================================
         switch (this.metodoPersistencia) {
             case SERIALIZACION -> guardarPorSerializacion();
             case ARCHIVO_TXT -> guardarEnTextoPlano(); // (Para implementar después)
@@ -82,7 +79,6 @@ public class ClienteDAO extends DAOBase implements IDAO<Cliente> {
 
         if (this.metodoPersistencia == MetodoPersistencia.SERIALIZACION) {
             try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(archivo))) {
-                // Leemos el bloque completo de bytes y lo casteamos de vuelta a la Lista
                 memoriaClientes = (List<Cliente>) ois.readObject();
                 System.out.println("[DAO] " + memoriaClientes.size() + " clientes cargados con éxito desde el disco.");
             } catch (IOException | ClassNotFoundException e) {
