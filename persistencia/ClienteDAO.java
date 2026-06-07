@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.math.BigDecimal;
 
 public class ClienteDAO extends DAOBase implements IDAO<Cliente> {
     
@@ -136,7 +137,8 @@ public class ClienteDAO extends DAOBase implements IDAO<Cliente> {
                     if (pn.getFidelidad() != null && pn.getFidelidad() instanceof ClienteHabitual) {
                         ClienteHabitual ch = (ClienteHabitual) pn.getFidelidad();
                         dos.writeBoolean(true);
-                        dos.writeDouble(ch.getPorcentajeDescuento());
+                        // Guardamos porcentaje como String (BigDecimal.toPlainString) para precisión completa
+                        dos.writeUTF(ch.getPorcentajeDescuento() == null ? "0" : ch.getPorcentajeDescuento().toPlainString());
                         dos.writeInt(ch.getPuntosAcumulados());
                     } else {
                         dos.writeBoolean(false);
@@ -174,8 +176,9 @@ public class ClienteDAO extends DAOBase implements IDAO<Cliente> {
                     boolean tieneFidelidad = dis.readBoolean();
                     PersonaNatural pn;
                     if (tieneFidelidad) {
-                        double porcentaje = dis.readDouble();
+                        String porcentajeStr = dis.readUTF();
                         int puntos = dis.readInt();
+                        BigDecimal porcentaje = (porcentajeStr == null || porcentajeStr.isEmpty()) ? BigDecimal.ZERO : new BigDecimal(porcentajeStr);
                         ClienteHabitual ch = new ClienteHabitual(porcentaje, puntos);
                         pn = new PersonaNatural(cedula, telefono, correo, direccion, fechaReg, activo, ch, nombre, apellido, cedula, LocalDate.now());
                     } else {
