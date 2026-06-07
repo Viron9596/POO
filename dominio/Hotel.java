@@ -7,6 +7,21 @@ import persistencia.HabitacionDAO;
 import persistencia.ReservaDAO;
 import persistencia.ServicioDAO;
 import persistencia.MetodoPersistencia;
+import persistencia.MetodoPersistencia.*;
+import persistencia.MetodoPersistencia;
+import persistencia.MetodoPersistencia;
+import persistencia.MetodoPersistencia;
+import persistencia.MetodoPersistencia;
+import persistencia.MetodoPersistencia;
+import persistencia.MetodoPersistencia;
+import persistencia.MetodoPersistencia;
+import persistencia.MetodoPersistencia;
+import persistencia.MetodoPersistencia;
+import persistencia.MetodoPersistencia;
+import persistencia.MetodoPersistencia;
+import persistencia.MetodoPersistencia;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
 /**
  * Clase que actúa como controlador y orquestador central del sistema del hotel.
@@ -88,6 +103,100 @@ public class Hotel {
             ServicioDAO dao = new ServicioDAO("servicios.dat", MetodoPersistencia.SERIALIZACION);
             dao.guardar(servicio);
         }
+    }
+
+    // --- NUEVAS OPERACIONES DE GESTIÓN (para mantener consistencia entre UI y persistencia) ---
+
+    public boolean modificarCliente(Cliente cliente) {
+        if (cliente == null) return false;
+        ClienteDAO dao = new ClienteDAO("clientes.dat", MetodoPersistencia.SERIALIZACION);
+        dao.guardar(cliente); // guardar() actualiza o inserta
+        refrescarDesdePersistencia();
+        return true;
+    }
+
+    public boolean eliminarCliente(String id) {
+        ClienteDAO dao = new ClienteDAO("clientes.dat", MetodoPersistencia.SERIALIZACION);
+        boolean res = dao.eliminar(id);
+        refrescarDesdePersistencia();
+        return res;
+    }
+
+    public boolean eliminarHabitacion(String numero) {
+        HabitacionDAO dao = new HabitacionDAO("habitaciones.dat", MetodoPersistencia.SERIALIZACION);
+        boolean res = dao.eliminar(numero);
+        refrescarDesdePersistencia();
+        return res;
+    }
+
+    public boolean actualizarPrecioHabitacion(String numero, BigDecimal nuevoPrecio) {
+        Habitacion h = buscarHabitacion(numero);
+        if (h == null) return false;
+        h.setPrecioPorNoche(nuevoPrecio);
+        HabitacionDAO dao = new HabitacionDAO("habitaciones.dat", MetodoPersistencia.SERIALIZACION);
+        dao.guardar(h);
+        refrescarDesdePersistencia();
+        return true;
+    }
+
+    public boolean eliminarReserva(String id) {
+        ReservaDAO dao = new ReservaDAO("reservas.dat", MetodoPersistencia.SERIALIZACION);
+        boolean res = dao.eliminar(id);
+        refrescarDesdePersistencia();
+        return res;
+    }
+
+    public boolean cancelarReserva(String id) {
+        Reserva r = buscarReserva(id);
+        if (r == null) return false;
+        r.cancelarReserva();
+        ReservaDAO dao = new ReservaDAO("reservas.dat", MetodoPersistencia.SERIALIZACION);
+        dao.guardar(r);
+        refrescarDesdePersistencia();
+        return true;
+    }
+
+    public boolean agregarHabitacionAReserva(String idReserva, String numeroHabitacion) {
+        Reserva r = buscarReserva(idReserva);
+        Habitacion h = buscarHabitacion(numeroHabitacion);
+        if (r == null || h == null) return false;
+        r.asignarHabitacion(h);
+        ReservaDAO dao = new ReservaDAO("reservas.dat", MetodoPersistencia.SERIALIZACION);
+        dao.guardar(r);
+        HabitacionDAO hdao = new HabitacionDAO("habitaciones.dat", MetodoPersistencia.SERIALIZACION);
+        hdao.guardar(h);
+        refrescarDesdePersistencia();
+        return true;
+    }
+
+    public boolean agregarServicioAReserva(String idReserva, String idServicioStr) {
+        Reserva r = buscarReserva(idReserva);
+        ServicioDAO sdao = new ServicioDAO("servicios.dat", MetodoPersistencia.SERIALIZACION);
+        ServicioHotel s = sdao.buscarPorId(idServicioStr);
+        if (r == null || s == null) return false;
+        ConsumoServicio cs = new ConsumoServicio("CON-" + (System.currentTimeMillis() % 1000), LocalDate.now(), 1, "Consumo desde UI", s);
+        r.agregarServicio(cs);
+        ReservaDAO rdao = new ReservaDAO("reservas.dat", MetodoPersistencia.SERIALIZACION);
+        rdao.guardar(r);
+        refrescarDesdePersistencia();
+        return true;
+    }
+
+    public boolean actualizarCostoServicio(String idServicioStr, BigDecimal nuevoCosto) {
+        ServicioDAO sdao = new ServicioDAO("servicios.dat", MetodoPersistencia.SERIALIZACION);
+        ServicioHotel s = sdao.buscarPorId(idServicioStr);
+        if (s == null) return false;
+        s.setCosto(nuevoCosto);
+        sdao.guardar(s);
+        refrescarDesdePersistencia();
+        return true;
+    }
+
+    public boolean eliminarServicio(String idServicioStr) {
+        ServicioDAO sdao = new ServicioDAO("servicios.dat", MetodoPersistencia.SERIALIZACION);
+        boolean res = sdao.eliminar(idServicioStr);
+        refrescarDesdePersistencia();
+        return res;
     }
 
     // --- MÉTODOS DE BÚSQUEDA INTERNA ---

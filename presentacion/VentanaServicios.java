@@ -5,7 +5,6 @@ import dominio.ServicioHotel;
 import javax.swing.*;
 import java.awt.*;
 import java.math.BigDecimal;
-import persistencia.*;
 
 public class VentanaServicios extends JDialog {
     private Hotel hotel;
@@ -69,23 +68,13 @@ public class VentanaServicios extends JDialog {
         }
     }
 
-    // Reemplazar estos métodos en tu VentanaServicios.java:
 public void editarServicio() {
-    ServicioDAO servicioDAO = new ServicioDAO("servicios.dat", MetodoPersistencia.SERIALIZACION);
-
     try {
-        // Validamos que el texto ingresado sea un número válido antes de proceder
-        new BigDecimal(txtIdServicio.getText().trim());
         BigDecimal nuevoCosto = new BigDecimal(txtCosto.getText().trim());
-        
-        // Pasamos el ID directamente como String al DAO para cumplir con la interfaz
         String idStr = txtIdServicio.getText().trim();
-        ServicioHotel s = servicioDAO.buscarPorId(idStr);
-        
-        if (s != null) {
-            s.actualizarCosto(nuevoCosto);
-            servicioDAO.guardar(s); // Sincronización en el archivo binario
-            txtAreaOutput.setText("Costo actualizado en el catálogo corporativo: $" + s.getCosto());
+        boolean ok = hotel.actualizarCostoServicio(idStr, nuevoCosto);
+        if (ok) {
+            txtAreaOutput.setText("Costo actualizado en el catálogo corporativo: $" + nuevoCosto);
         } else {
             JOptionPane.showMessageDialog(this, "ID de Servicio corporativo no encontrado.");
         }
@@ -95,16 +84,9 @@ public void editarServicio() {
 }
 
 public void eliminarServicio() {
-    ServicioDAO servicioDAO = new ServicioDAO("servicios.dat", MetodoPersistencia.SERIALIZACION);
-
     try {
-        // Validamos que el texto sea un número válido
-        new BigDecimal(txtIdServicio.getText().trim());
-        
-        // Pasamos el ID directamente como String al DAO
         String idStr = txtIdServicio.getText().trim();
-        boolean removido = servicioDAO.eliminar(idStr);
-        
+        boolean removido = hotel.eliminarServicio(idStr);
         if (removido) {
             txtAreaOutput.setText("Servicio revocado definitivamente del catálogo institucional.");
             txtIdServicio.setText("");
@@ -112,7 +94,7 @@ public void eliminarServicio() {
         } else {
             JOptionPane.showMessageDialog(this, "El Servicio no existe en el almacenamiento.");
         }
-    } catch (NumberFormatException ex) {
+    } catch (Exception ex) {
         JOptionPane.showMessageDialog(this, "El ID de Servicio debe ser un valor numérico válido.");
     }
 }

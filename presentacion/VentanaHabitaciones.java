@@ -84,31 +84,22 @@ public class VentanaHabitaciones extends JDialog {
         }
     }
 
-    // Reemplazar estos métodos en tu VentanaHabitaciones.java:
-
     public void editarHabitacion() {
-        HabitacionDAO habitacionDAO = new HabitacionDAO("habitaciones.dat", MetodoPersistencia.SERIALIZACION);
-
-        // Buscar la entidad real en la persistencia binaria
-        Habitacion h = habitacionDAO.buscarPorId(txtNumero.getText());
-        if (h != null) {
-            try {
-                h.setPrecioPorNoche(new BigDecimal(txtPrecio.getText()));
-                // Al guardar, el DAO re-serializa automáticamente todo el inventario en disco
-                habitacionDAO.guardar(h); 
-                txtAreaOutput.setText("Tarifa actualizada con éxito: $" + h.getPrecioPorNoche() + " para la Habitación " + h.getNumeroHabitacion());
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(this, "Formato de precio inválido.");
+        try {
+            BigDecimal nuevo = new BigDecimal(txtPrecio.getText());
+            boolean ok = hotel.actualizarPrecioHabitacion(txtNumero.getText(), nuevo);
+            if (ok) {
+                txtAreaOutput.setText("Tarifa actualizada con éxito: $" + nuevo + " para la Habitación " + txtNumero.getText());
+            } else {
+                JOptionPane.showMessageDialog(this, "Habitación no encontrada en los registros físicos.");
             }
-        } else {
-            JOptionPane.showMessageDialog(this, "Habitación no encontrada en los registros físicos.");
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Formato de precio inválido.");
         }
     }
 
     public void eliminarHabitacion() {
-        HabitacionDAO habitacionDAO = new HabitacionDAO("habitaciones.dat", MetodoPersistencia.SERIALIZACION);
-
-        boolean removido = habitacionDAO.eliminar(txtNumero.getText());
+        boolean removido = hotel.eliminarHabitacion(txtNumero.getText());
         if (removido) {
             txtAreaOutput.setText("Habitación Nº " + txtNumero.getText() + " removida permanentemente del inventario.");
         } else {

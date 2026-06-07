@@ -4,6 +4,7 @@ import dominio.*;
 import javax.swing.*;
 import java.awt.*;
 import java.time.LocalDate;
+import java.math.BigDecimal;
 import persistencia.*;
 
 public class VentanaReservas extends JDialog {
@@ -83,20 +84,18 @@ public void crearReserva() {
         int noches = Integer.parseInt(nochesStr);
         if (noches <= 0) throw new NumberFormatException();
 
-        // 2. Validación de existencia del cliente (usando DAO)
-        ClienteDAO clienteDAO = new ClienteDAO("clientes.dat", MetodoPersistencia.SERIALIZACION);
-        Cliente c = clienteDAO.buscarPorId(idCliente);
+        // 2. Validación de existencia del cliente (usando Hotel)
+        Cliente c = hotel.buscarCliente(idCliente);
         
         if (c == null) {
             JOptionPane.showMessageDialog(this, "El cliente ingresado no existe.");
             return;
         }
 
-        // 3. Crear y persistir usando ÚNICAMENTE el DAO
+        // 3. Crear y persistir usando el Hotel
         Reserva res = new Reserva(idReserva, LocalDate.now(), LocalDate.now(), LocalDate.now().plusDays(noches), noches, c);
         
-        ReservaDAO reservaDAO = new ReservaDAO("reservas.dat", MetodoPersistencia.SERIALIZACION);
-        reservaDAO.guardar(res); // El DAO se encarga de serializar y actualizar la lista en memoria
+        hotel.registrarReserva(res);
 
         txtAreaOutput.setText("Reserva [" + idReserva + "] creada y persistida en disco exitosamente.");
         
@@ -112,15 +111,9 @@ public void crearReserva() {
             return;
         }
 
-        // Usamos el DAO como única fuente de verdad para la operación
-        ReservaDAO reservaDAO = new ReservaDAO("reservas.dat", MetodoPersistencia.SERIALIZACION);
-
-        // Al eliminar del DAO, el método interno ya maneja la sincronización del archivo (.dat)
-        boolean exito = reservaDAO.eliminar(idReserva);
+        boolean exito = hotel.cancelarReserva(idReserva);
 
         if (exito) {
-            // Opcional: Si el objeto 'hotel' debe mantenerse sincronizado en RAM,
-            // deberías refrescar la lista del hotel desde el DAO después de la eliminación.
             txtAreaOutput.setText("Reserva [" + idReserva + "] cancelada exitosamente del sistema.");
             txtIdReserva.setText(""); // Limpiamos el campo tras el éxito
         } else {
@@ -134,46 +127,19 @@ public void crearReserva() {
         txtAreaOutput.setText("Habitaciones listas para reservar: " + habs.size());
     }
 
-    // Reemplazar estos métodos en tu VentanaReservas.java:
-
     public void vincularHabitacionReserva() {
-    ReservaDAO reservaDAO = new ReservaDAO("reservas.dat", MetodoPersistencia.SERIALIZACION);
-    HabitacionDAO habitacionDAO = new HabitacionDAO("habitaciones.dat", MetodoPersistencia.SERIALIZACION);
-
-    Reserva res = reservaDAO.buscarPorId(txtIdReserva.getText());
-    // HabitacionDAO maneja llaves String (número de habitación)
-    Habitacion hab = habitacionDAO.buscarPorId(txtNumHab.getText()); 
-
-    if (res != null && hab != null) {
-        res.getHabitaciones().add(hab); // Agregación directa a la lista interna de la reserva
-        reservaDAO.guardar(res); // Sincroniza y persiste el estado modificado en disco
-        txtAreaOutput.setText("Habitación " + hab.getNumeroHabitacion() + " vinculada y persistida en la Reserva " + res.getIdReserva());
+    boolean ok = hotel.agregarHabitacionAReserva(txtIdReserva.getText(), txtNumHab.getText());
+    if (ok) {
+        txtAreaOutput.setText("Habitación " + txtNumHab.getText() + " vinculada y persistida en la Reserva " + txtIdReserva.getText());
     } else {
         JOptionPane.showMessageDialog(this, "Verifique existencia de la Reserva y de la Habitación en disco.");
     }
 }
 
 public void agregarServicioReserva() {
-    ReservaDAO reservaDAO = new ReservaDAO("reservas.dat", MetodoPersistencia.SERIALIZACION);
-    ServicioDAO servicioDAO = new ServicioDAO("servicios.dat", MetodoPersistencia.SERIALIZACION);
-
-    Reserva res = reservaDAO.buscarPorId(txtIdReserva.getText());
-    // ServicioDAO busca por String internamente
-    ServicioHotel sh = servicioDAO.buscarPorId(txtIdServicio.getText()); 
-
-    if (res != null && sh != null) {
-        // Creamos el consumo de servicio vinculando la instancia del servicio corporativo hallado
-        ConsumoServicio cs = new ConsumoServicio(
-            "CON-" + (System.currentTimeMillis() % 1000), 
-            LocalDate.now(), 
-            1, 
-            "Consumo desde UI", 
-            sh
-        );
-        
-        res.getConsumosServicios().add(cs); // Adición a la lista de consumos de la Reserva
-        reservaDAO.guardar(res); // Sincroniza el nuevo grafo de objetos binariamente en el archivo
-        txtAreaOutput.setText("Servicio institucional '" + sh.getNombre() + "' cargado y guardado en la Reserva " + res.getIdReserva());
+    boolean ok = hotel.agregarServicioAReserva(txtIdReserva.getText(), txtIdServicio.getText());
+    if (ok) {
+        txtAreaOutput.setText("Servicio cargado y guardado en la Reserva " + txtIdReserva.getText());
     } else {
         JOptionPane.showMessageDialog(this, "Verifique existencia de la Reserva y del Servicio en disco.");
     }

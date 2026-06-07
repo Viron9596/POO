@@ -6,7 +6,6 @@ import dominio.Hotel;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
-import persistencia.*;
 
 public class VentanaClientes extends JDialog {
     private Hotel hotel;
@@ -84,7 +83,6 @@ public class VentanaClientes extends JDialog {
         java.time.LocalDate fechaRegistro = java.time.LocalDate.now();
         boolean activo = true;
         
-        // CORRECCIÓN: Se especifica el paquete 'dominio' para evitar el error de importación
         dominio.IFidelidad fidelidad = null; 
         
         String nombre = txtNombre.getText();
@@ -113,23 +111,19 @@ public class VentanaClientes extends JDialog {
     public void editarCliente() {
         Cliente c = hotel.buscarCliente(txtId.getText());
         if (c != null) {
-            c.setCorreo(txtCorreo.getText()); // Corrección: 'setCorreo'
+            c.setCorreo(txtCorreo.getText());
             c.setTelefono(txtTelefono.getText());
+            // Persistimos el cambio
+            hotel.modificarCliente(c);
             txtAreaOutput.setText("Datos de contacto actualizados para: " + c.obtenerNombreCompleto());
         } else {
             JOptionPane.showMessageDialog(this, "Cliente no encontrado.");
         }
     }
 
-    // Reemplazar estos métodos en tu VentanaClientes.java:
-
 public void listarClientes() {
-    // Instanciamos el DAO de Clientes configurado en Serialización
-    ClienteDAO clienteDAO = new ClienteDAO("clientes.dat", MetodoPersistencia.SERIALIZACION);
-    
     StringBuilder sb = new StringBuilder("=== TODOS LOS CLIENTES REGISTRADOS ===\n");
-    // Leemos directamente los datos físicos reales
-    for (Cliente c : clienteDAO.listarTodo()) {
+    for (Cliente c : hotel.getClientes()) {
         sb.append("ID: ").append(c.obtenerIdentificacion())
           .append(" | Nombre: ").append(c.obtenerNombreCompleto())
           .append(" | Email: ").append(c.getCorreo()).append("\n");
@@ -138,10 +132,7 @@ public void listarClientes() {
 }
 
     public void eliminarCliente() {
-        ClienteDAO clienteDAO = new ClienteDAO("clientes.dat", MetodoPersistencia.SERIALIZACION);
-
-        // Eliminación directa en base de datos binaria
-        boolean removido = clienteDAO.eliminar(txtId.getText());
+        boolean removido = hotel.eliminarCliente(txtId.getText());
         if (removido) {
             txtAreaOutput.setText("Cliente [" + txtId.getText() + "] eliminado correctamente del sistema y del disco.");
             listarClientes(); // Refrescar componentes de la pantalla
