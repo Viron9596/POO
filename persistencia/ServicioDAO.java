@@ -4,6 +4,7 @@ import dominio.ServicioHotel;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.math.BigDecimal;
 
 public class ServicioDAO extends DAOBase implements IDAO<ServicioHotel> {
     
@@ -17,22 +18,36 @@ public class ServicioDAO extends DAOBase implements IDAO<ServicioHotel> {
     @Override
     public void guardar(ServicioHotel servicio) {
         if (servicio == null) return;
-        eliminar(servicio.getIdServicio().toString());
+        // usar toPlainString para representar el BigDecimal de forma estable
+        eliminar(servicio.getIdServicio().toPlainString());
         memoriaServicios.add(servicio);
         if (this.metodoPersistencia == MetodoPersistencia.SERIALIZACION) { guardarPorSerializacion(); }
     }
 
     @Override
     public boolean eliminar(String id) {
-        boolean eliminado = memoriaServicios.removeIf(s -> s.getIdServicio().toString().equals(id));
-        if (eliminado && this.metodoPersistencia == MetodoPersistencia.SERIALIZACION) { guardarPorSerializacion(); }
-        return eliminado;
+        if (id == null) return false;
+        try {
+            BigDecimal idBd = new BigDecimal(id);
+            boolean eliminado = memoriaServicios.removeIf(s -> s.getIdServicio() != null && s.getIdServicio().compareTo(idBd) == 0);
+            if (eliminado && this.metodoPersistencia == MetodoPersistencia.SERIALIZACION) { guardarPorSerializacion(); }
+            return eliminado;
+        } catch (NumberFormatException e) {
+            // Si el id no es un número válido, no hacemos nada
+            return false;
+        }
     }
 
     @Override
     public ServicioHotel buscarPorId(String id) {
-        for (ServicioHotel s : memoriaServicios) {
-            if (s.getIdServicio().toString().equals(id)) return s;
+        if (id == null) return null;
+        try {
+            BigDecimal idBd = new BigDecimal(id);
+            for (ServicioHotel s : memoriaServicios) {
+                if (s.getIdServicio() != null && s.getIdServicio().compareTo(idBd) == 0) return s;
+            }
+        } catch (NumberFormatException e) {
+            // id no numérico
         }
         return null;
     }

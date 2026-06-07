@@ -7,19 +7,6 @@ import persistencia.HabitacionDAO;
 import persistencia.ReservaDAO;
 import persistencia.ServicioDAO;
 import persistencia.MetodoPersistencia;
-import persistencia.MetodoPersistencia.*;
-import persistencia.MetodoPersistencia;
-import persistencia.MetodoPersistencia;
-import persistencia.MetodoPersistencia;
-import persistencia.MetodoPersistencia;
-import persistencia.MetodoPersistencia;
-import persistencia.MetodoPersistencia;
-import persistencia.MetodoPersistencia;
-import persistencia.MetodoPersistencia;
-import persistencia.MetodoPersistencia;
-import persistencia.MetodoPersistencia;
-import persistencia.MetodoPersistencia;
-import persistencia.MetodoPersistencia;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
@@ -53,7 +40,7 @@ public class Hotel {
 
     /**
      * Sincroniza dinámicamente los ArrayList de la clase con el estado actual
-     * de los DAOs estáticos y el almacenamiento físico en disco.
+     * de los DAOs y el almacenamiento físico en disco.
      */
     private void refrescarDesdePersistencia() {
         ClienteDAO clienteDAO = new ClienteDAO("clientes.dat", MetodoPersistencia.SERIALIZACION);
