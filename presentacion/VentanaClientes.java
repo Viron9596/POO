@@ -72,12 +72,14 @@ public class VentanaClientes extends JDialog {
         JButton btnElim = new JButton("Eliminar");
         JButton btnList = new JButton("Listar Todos");
         JButton btnListHab = new JButton("Habituales");
+        JButton btnListEsp = new JButton("Esporádicos");
 
         pnlBotones.add(btnReg);
         pnlBotones.add(btnEdit);
         pnlBotones.add(btnElim);
         pnlBotones.add(btnList);
         pnlBotones.add(btnListHab);
+        pnlBotones.add(btnListEsp);
         add(pnlBotones, BorderLayout.SOUTH);
 
         // Vinculación de eventos
@@ -86,6 +88,7 @@ public class VentanaClientes extends JDialog {
         btnElim.addActionListener(e -> eliminarCliente());
         btnList.addActionListener(e -> listarClientes());
         btnListHab.addActionListener(e -> listarClientesHabituales());
+        btnListEsp.addActionListener(e -> listarClientesEsporadicos());
 
         cmbTipoCliente.addActionListener(e -> actualizarCamposFidelidad());
         // Inicializar estado
@@ -222,6 +225,17 @@ public class VentanaClientes extends JDialog {
             sb.append("\n");
         }
         if (habituales.isEmpty()) sb.append("Ninguno cumple los criterios actualmente.");
+        txtAreaOutput.setText(sb.toString());
+    }
+
+    public void listarClientesEsporadicos() {
+        StringBuilder sb = new StringBuilder("=== CLIENTES ESPORADICOS ===\n");
+        for (Cliente c : hotel.getClientes()) {
+            // Consideramos esporádicos a los que tengan estrategia ClienteEsporadico o no tengan estrategia
+            if (c.getFidelidad() == null || c.getFidelidad() instanceof ClienteEsporadico) {
+                sb.append(" - ").append(c.obtenerNombreCompleto()).append(" (ID: ").append(c.obtenerIdentificacion()).append(")\n");
+            }
+        }
         txtAreaOutput.setText(sb.toString());
     }
 }
