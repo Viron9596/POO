@@ -29,7 +29,6 @@ public class HabitacionDAO extends DAOBase implements IDAO<Habitacion> {
         memoriaHabitaciones.add(habitacion);
         switch (this.metodoPersistencia) {
             case SERIALIZACION -> guardarPorSerializacion();
-            case ARCHIVO_TXT -> guardarEnTextoPlano();
             case ARCHIVO_BINARIO -> guardarEnBinario();
         }
     }
@@ -74,7 +73,6 @@ public class HabitacionDAO extends DAOBase implements IDAO<Habitacion> {
                     }
                 }
                 case ARCHIVO_BINARIO -> cargarDesdeBinario();
-                case ARCHIVO_TXT -> System.out.println("[DAO] Carga en texto no implementada para habitaciones.");
             }
         } catch (IOException | ClassNotFoundException e) {
             System.err.println("[ERROR DAO] Error al cargar habitaciones: " + e.getMessage());
@@ -84,27 +82,10 @@ public class HabitacionDAO extends DAOBase implements IDAO<Habitacion> {
     private void actualizarArchivoFisico() {
         switch (this.metodoPersistencia) {
             case SERIALIZACION -> guardarPorSerializacion();
-            case ARCHIVO_TXT -> guardarEnTextoPlano();
             case ARCHIVO_BINARIO -> guardarEnBinario();
         }
     }
 
-    private void guardarEnTextoPlano() {
-        System.out.println("[DAO] Pendiente: texto plano para habitaciones.");
-    }
-
-    // Esquema binario:
-    // int N
-    // for each:
-    //   int tipo (1=Sencilla,2=Doble,3=Matrimonial)
-    //   writeUTF numero
-    //   writeUTF descripcion
-    //   writeUTF precio (BigDecimal toPlainString)
-    //   writeInt capacidad
-    //   writeInt piso
-    //   writeUTF estado (name)
-    //   writeBoolean activo (true=disponible?) -- se mapeará a EstadoHabitacion según convenga
-    //   campos específicos según tipo
     private void guardarEnBinario() {
         try (DataOutputStream dos = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(this.rutaArchivo)))) {
             dos.writeInt(memoriaHabitaciones.size());

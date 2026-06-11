@@ -49,7 +49,6 @@ public class Hotel {
         String ext;
         switch (this.metodoPersistencia) {
             case ARCHIVO_BINARIO -> ext = ".bin";
-            case ARCHIVO_TXT -> ext = ".txt";
             default -> ext = ".dat"; // SERIALIZACION
         }
         return (this.carpetaDatos == null || this.carpetaDatos.isEmpty()) ? base + ext : this.carpetaDatos + base + ext;

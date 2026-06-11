@@ -29,7 +29,6 @@ public class ClienteDAO extends DAOBase implements IDAO<Cliente> {
         // Persistencia según estrategia
         switch (this.metodoPersistencia) {
             case SERIALIZACION -> guardarPorSerializacion();
-            case ARCHIVO_TXT -> guardarEnTextoPlano();
             case ARCHIVO_BINARIO -> guardarEnBinario();
         }
     }
@@ -87,10 +86,6 @@ public class ClienteDAO extends DAOBase implements IDAO<Cliente> {
                     }
                 }
                 case ARCHIVO_BINARIO -> cargarDesdeBinario();
-                case ARCHIVO_TXT -> {
-                    // futuro: implementar texto
-                    System.out.println("[DAO] Carga en texto no implementada aún.");
-                }
             }
         } catch (IOException | ClassNotFoundException e) {
             System.err.println("[ERROR DAO] Error al cargar datos: " + e.getMessage());
@@ -100,16 +95,8 @@ public class ClienteDAO extends DAOBase implements IDAO<Cliente> {
     private void actualizarArchivoFisico() {
         switch (this.metodoPersistencia) {
             case SERIALIZACION -> guardarPorSerializacion();
-            case ARCHIVO_TXT -> guardarEnTextoPlano();
             case ARCHIVO_BINARIO -> guardarEnBinario();
         }
-    }
-
-    // =======================================================
-    // ARCHIVO_TXT (placeholder)
-    // =======================================================
-    private void guardarEnTextoPlano() {
-        System.out.println("[DAO] Pendiente codificar escritura de texto plano (CSV/JSON)");
     }
 
     // =======================================================
