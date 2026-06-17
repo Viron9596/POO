@@ -18,6 +18,9 @@ public class VentanaClientes extends JDialog {
     private JComboBox<String> cmbTipoCliente;
     private JTextField txtPorcentajeDescuento;
     private JSpinner spnPuntos;
+    
+    // Referencia al diálogo de configuración
+    private DialogoConfigurarArchivo dialogoConfiguracion;
 
     public VentanaClientes(JFrame padre, Hotel hotel) {
         super(padre, "Gestión de Clientes", true);
@@ -26,7 +29,7 @@ public class VentanaClientes extends JDialog {
     }
 
     private void configurarComponentes() {
-        setSize(600, 480);
+        setSize(600, 520);
         setLocationRelativeTo(getOwner());
         setLayout(new BorderLayout());
 
@@ -73,6 +76,7 @@ public class VentanaClientes extends JDialog {
         JButton btnList = new JButton("Listar Todos");
         JButton btnListHab = new JButton("Habituales");
         JButton btnListEsp = new JButton("Esporádicos");
+        JButton btnGuardar = new JButton("💾 Guardar y Finalizar");
 
         pnlBotones.add(btnReg);
         pnlBotones.add(btnEdit);
@@ -80,6 +84,8 @@ public class VentanaClientes extends JDialog {
         pnlBotones.add(btnList);
         pnlBotones.add(btnListHab);
         pnlBotones.add(btnListEsp);
+        pnlBotones.add(new JSeparator(JSeparator.VERTICAL));
+        pnlBotones.add(btnGuardar);
         add(pnlBotones, BorderLayout.SOUTH);
 
         // Vinculación de eventos
@@ -89,6 +95,7 @@ public class VentanaClientes extends JDialog {
         btnList.addActionListener(e -> listarClientes());
         btnListHab.addActionListener(e -> listarClientesHabituales());
         btnListEsp.addActionListener(e -> listarClientesEsporadicos());
+        btnGuardar.addActionListener(e -> guardarYFinalizar());
 
         cmbTipoCliente.addActionListener(e -> actualizarCamposFidelidad());
         // Inicializar estado
@@ -152,7 +159,7 @@ public class VentanaClientes extends JDialog {
         );
         
         hotel.registrarCliente(nuevo);
-        txtAreaOutput.setText("Cliente registrado exitosamente:\n" + nuevo.obtenerNombreCompleto());
+        txtAreaOutput.setText("✅ Cliente registrado exitosamente:\n" + nuevo.obtenerNombreCompleto());
     }
 
     public void editarCliente() {
@@ -179,14 +186,14 @@ public class VentanaClientes extends JDialog {
 
             // Persistimos el cambio
             hotel.modificarCliente(c);
-            txtAreaOutput.setText("Datos de contacto y fidelidad actualizados para: " + c.obtenerNombreCompleto());
+            txtAreaOutput.setText("✅ Datos de contacto y fidelidad actualizados para: " + c.obtenerNombreCompleto());
         } else {
             JOptionPane.showMessageDialog(this, "Cliente no encontrado.");
         }
     }
 
     public void listarClientes() {
-        StringBuilder sb = new StringBuilder("=== TODOS LOS CLIENTES REGISTRADOS ===\n");
+        StringBuilder sb = new StringBuilder("=== TODOS LOS CLIENTES REGISTRADOS ===\n\n");
         for (Cliente c : hotel.getClientes()) {
             sb.append("ID: ").append(c.obtenerIdentificacion())
               .append(" | Nombre: ").append(c.obtenerNombreCompleto())
@@ -206,7 +213,7 @@ public class VentanaClientes extends JDialog {
     public void eliminarCliente() {
         boolean removido = hotel.eliminarCliente(txtId.getText().trim());
         if (removido) {
-            txtAreaOutput.setText("Cliente [" + txtId.getText() + "] eliminado correctamente del sistema y del disco.");
+            txtAreaOutput.setText("✅ Cliente [" + txtId.getText() + "] eliminado correctamente del sistema.");
             listarClientes(); // Refrescar componentes de la pantalla
         } else {
             JOptionPane.showMessageDialog(this, "La identificación ingresada no se encuentra registrada.");
@@ -215,7 +222,7 @@ public class VentanaClientes extends JDialog {
 
     public void listarClientesHabituales() {
         List<Cliente> habituales = hotel.listarClientesHabituales();
-        StringBuilder sb = new StringBuilder("=== CLIENTES HABITUALES (Estrategia de Descuento Activa) ===\n");
+        StringBuilder sb = new StringBuilder("=== CLIENTES HABITUALES (Estrategia de Descuento Activa) ===\n\n");
         for (Cliente c : habituales) {
             sb.append(" - ").append(c.obtenerNombreCompleto()).append(" (ID: ").append(c.obtenerIdentificacion()).append(")");
             if (c.getFidelidad() instanceof ClienteHabitual) {
@@ -229,7 +236,7 @@ public class VentanaClientes extends JDialog {
     }
 
     public void listarClientesEsporadicos() {
-        StringBuilder sb = new StringBuilder("=== CLIENTES ESPORADICOS ===\n");
+        StringBuilder sb = new StringBuilder("=== CLIENTES ESPORADICOS ===\n\n");
         for (Cliente c : hotel.getClientes()) {
             // Consideramos esporádicos a los que tengan estrategia ClienteEsporadico o no tengan estrategia
             if (c.getFidelidad() == null || c.getFidelidad() instanceof ClienteEsporadico) {
@@ -237,5 +244,28 @@ public class VentanaClientes extends JDialog {
             }
         }
         txtAreaOutput.setText(sb.toString());
+    }
+
+    private void guardarYFinalizar() {
+        // Obtener la referencia del diálogo de configuración desde el padre
+        JFrame padre = (JFrame) getOwner();
+        if (padre instanceof SistemaHotelGUI) {
+            // Crear instancia temporal del diálogo para acceder a su método
+            dialogoConfiguracion = new DialogoConfigurarArchivo(padre, "clientes");
+            if (dialogoConfiguracion.estaConfigurado()) {
+                if (dialogoConfiguracion.crearArchivoBinario()) {
+                    txtAreaOutput.setText("✅ ARCHIVO BINARIO CREADO EXITOSAMENTE\n\n" +
+                            "Ubicación: " + dialogoConfiguracion.getRutaArchivo() + "\n" +
+                            "Nombre: " + dialogoConfiguracion.getNombreArchivo() + "\n\n" +
+                            "Todos los datos de clientes han sido guardados.");
+                    JOptionPane.showMessageDialog(this, "Datos guardados correctamente en archivo binario", 
+                            "Éxito", JOptionPane.INFORMATION_MESSAGE);
+                    dispose();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Error al crear archivo binario", 
+                            "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }
     }
 }
