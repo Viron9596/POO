@@ -9,6 +9,9 @@ public class VentanaFacturacion extends JDialog {
     private Hotel hotel;
     private JTextField txtIdReserva;
     private JTextArea txtAreaFactura;
+    
+    // Referencia al diálogo de configuración
+    private DialogoConfigurarArchivo dialogoConfiguracion;
 
     public VentanaFacturacion(JFrame padre, Hotel hotel) {
         super(padre, "Módulo de Facturación Informativa", true);
@@ -17,7 +20,7 @@ public class VentanaFacturacion extends JDialog {
     }
 
     private void configurarComponentes() {
-        setSize(550, 480);
+        setSize(550, 520);
         setLocationRelativeTo(getOwner());
         setLayout(new BorderLayout());
 
@@ -33,10 +36,14 @@ public class VentanaFacturacion extends JDialog {
         txtAreaFactura = new FontAndAreaConfig().getArea();
         add(new JScrollPane(txtAreaFactura), BorderLayout.CENTER);
 
-        btnCalcular.addActionListener(e -> procesarFacturacionCompleta());
-    }
+        JPanel pnlBotonesInf = new JPanel(new FlowLayout());
+        JButton btnGuardar = new JButton("💾 Guardar y Finalizar");
+        pnlBotonesInf.add(btnGuardar);
+        add(pnlBotonesInf, BorderLayout.SOUTH);
 
-    // Reemplazar este método en tu VentanaFacturacion.java:
+        btnCalcular.addActionListener(e -> procesarFacturacionCompleta());
+        btnGuardar.addActionListener(e -> guardarYFinalizar());
+    }
 
     private void procesarFacturacionCompleta() {
         ReservaDAO reservaDAO = new ReservaDAO("reservas.dat", MetodoPersistencia.SERIALIZACION);
@@ -56,7 +63,30 @@ public class VentanaFacturacion extends JDialog {
                 JOptionPane.showMessageDialog(this, "Error al procesar los subtotales de la factura.");
             }
         } else {
-            JOptionPane.showMessageDialog(this, "La Reserva solicitada no existe en el registro binario.");
+            JOptionPane.showMessageDialog(this, "La Reserva solicitada no existe.");
+        }
+    }
+
+    private void guardarYFinalizar() {
+        // Obtener la referencia del diálogo de configuración desde el padre
+        JFrame padre = (JFrame) getOwner();
+        if (padre instanceof SistemaHotelGUI) {
+            // Crear instancia temporal del diálogo para acceder a su método
+            dialogoConfiguracion = new DialogoConfigurarArchivo(padre, "facturas");
+            if (dialogoConfiguracion.estaConfigurado()) {
+                if (dialogoConfiguracion.crearArchivoBinario()) {
+                    txtAreaFactura.setText("✅ ARCHIVO BINARIO CREADO EXITOSAMENTE\n\n" +
+                            "Ubicación: " + dialogoConfiguracion.getRutaArchivo() + "\n" +
+                            "Nombre: " + dialogoConfiguracion.getNombreArchivo() + "\n\n" +
+                            "Todos los datos de facturación han sido guardados.");
+                    JOptionPane.showMessageDialog(this, "Datos guardados correctamente en archivo binario", 
+                            "Éxito", JOptionPane.INFORMATION_MESSAGE);
+                    dispose();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Error al crear archivo binario", 
+                            "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
         }
     }
 
