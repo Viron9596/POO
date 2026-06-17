@@ -6,6 +6,7 @@ import dominio.ClienteHabitual;
 import dominio.ClienteEsporadico;
 import dominio.Hotel;
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
 
@@ -13,15 +14,20 @@ public class VentanaClientes extends JDialog {
     private Hotel hotel;
     private JTextField txtId, txtNombre, txtCorreo, txtTelefono;
     private JTextArea txtAreaOutput;
+    private JTable tablaClientes;
+    private DefaultTableModel modeloTabla;
 
     // Fidelidad
     private JComboBox<String> cmbTipoCliente;
     private JTextField txtPorcentajeDescuento;
     private JSpinner spnPuntos;
-    
-    // Referencia al diálogo de configuración
-    private DialogoConfigurarArchivo dialogoConfiguracion;
 
+    /**
+     * CAMBIO: Constructor simplificado
+     * ANTES: VentanaClientes(JFrame padre, Hotel hotel, String rutaClientesActual)
+     * AHORA: VentanaClientes(JFrame padre, Hotel hotel)
+     * Razón: La persistencia NO debe bloquear la carga de la ventana
+     */
     public VentanaClientes(JFrame padre, Hotel hotel) {
         super(padre, "Gestión de Clientes", true);
         this.hotel = hotel;
@@ -29,32 +35,36 @@ public class VentanaClientes extends JDialog {
     }
 
     private void configurarComponentes() {
-        setSize(600, 520);
+        setSize(900, 600);
         setLocationRelativeTo(getOwner());
         setLayout(new BorderLayout());
 
-        // Ampliamos el formulario para incluir fidelidad
+        // Panel superior: Formulario de entrada
         JPanel pnlForm = new JPanel(new GridLayout(7, 2, 5, 5));
         pnlForm.setBorder(BorderFactory.createTitledBorder("Datos del Cliente"));
         
         pnlForm.add(new JLabel("Identificación (ID / RUT):"));
-        txtId = new JTextField(); pnlForm.add(txtId);
+        txtId = new JTextField(); 
+        pnlForm.add(txtId);
         
         pnlForm.add(new JLabel("Nombre Completo / Razón Social:"));
-        txtNombre = new JTextField(); pnlForm.add(txtNombre);
+        txtNombre = new JTextField(); 
+        pnlForm.add(txtNombre);
         
         pnlForm.add(new JLabel("Correo Electrónico:"));
-        txtCorreo = new JTextField(); pnlForm.add(txtCorreo);
+        txtCorreo = new JTextField(); 
+        pnlForm.add(txtCorreo);
         
         pnlForm.add(new JLabel("Teléfono:"));
-        txtTelefono = new JTextField(); pnlForm.add(txtTelefono);
+        txtTelefono = new JTextField(); 
+        pnlForm.add(txtTelefono);
 
         pnlForm.add(new JLabel("Tipo de Cliente:"));
         cmbTipoCliente = new JComboBox<>(new String[] {"Esporadico", "Habitual"});
         pnlForm.add(cmbTipoCliente);
 
         pnlForm.add(new JLabel("% Descuento (si Habitual):"));
-        txtPorcentajeDescuento = new JTextField("10"); // default 10%
+        txtPorcentajeDescuento = new JTextField("10");
         pnlForm.add(txtPorcentajeDescuento);
 
         pnlForm.add(new JLabel("Puntos Acumulados (si Habitual):"));
@@ -63,30 +73,50 @@ public class VentanaClientes extends JDialog {
 
         add(pnlForm, BorderLayout.NORTH);
 
-        // Consola de Resultados Interna
+        // Panel central: Tabla de clientes
+        String[] columnas = {"ID", "Nombre", "Email", "Teléfono", "Tipo Fidelidad"};
+        modeloTabla = new DefaultTableModel(columnas, 0);
+        tablaClientes = new JTable(modeloTabla);
+        tablaClientes.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        
+        JScrollPane scrollTabla = new JScrollPane(tablaClientes);
+        scrollTabla.setBorder(BorderFactory.createTitledBorder("Lista de Clientes"));
+        add(scrollTabla, BorderLayout.CENTER);
+
+        // Panel de resultado (texto)
         txtAreaOutput = new JTextArea();
         txtAreaOutput.setEditable(false);
-        add(new JScrollPane(txtAreaOutput), BorderLayout.CENTER);
+        txtAreaOutput.setFont(new Font("Monospaced", Font.PLAIN, 10));
+        JScrollPane scrollOutput = new JScrollPane(txtAreaOutput);
+        scrollOutput.setBorder(BorderFactory.createTitledBorder("Mensajes"));
+        scrollOutput.setPreferredSize(new Dimension(900, 120));
+        add(scrollOutput, BorderLayout.SOUTH);
 
-        // Botonera de acciones UML
-        JPanel pnlBotones = new JPanel(new FlowLayout());
-        JButton btnReg = new JButton("Registrar");
-        JButton btnEdit = new JButton("Editar");
-        JButton btnElim = new JButton("Eliminar");
-        JButton btnList = new JButton("Listar Todos");
-        JButton btnListHab = new JButton("Habituales");
-        JButton btnListEsp = new JButton("Esporádicos");
-        JButton btnGuardar = new JButton("💾 Guardar y Finalizar");
+        // Panel de botones: Acciones operativas
+        JPanel pnlBotones = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JButton btnReg = new JButton("➕ Registrar");
+        JButton btnEdit = new JButton("✏️ Editar");
+        JButton btnElim = new JButton("🗑️ Eliminar");
+        JButton btnList = new JButton("📋 Listar Todos");
+        JButton btnListHab = new JButton("👤 Habituales");
+        JButton btnListEsp = new JButton("👤 Esporádicos");
+        
+        // CAMBIO: Aquí SOLO se abre la ventana, sin DialogoConfigurarArchivo
+        JButton btnGuardar = new JButton("💾 Guardar Datos");
+        JButton btnCerrar = new JButton("❌ Cerrar");
 
         pnlBotones.add(btnReg);
         pnlBotones.add(btnEdit);
         pnlBotones.add(btnElim);
+        pnlBotones.add(new JSeparator(JSeparator.VERTICAL));
         pnlBotones.add(btnList);
         pnlBotones.add(btnListHab);
         pnlBotones.add(btnListEsp);
         pnlBotones.add(new JSeparator(JSeparator.VERTICAL));
         pnlBotones.add(btnGuardar);
-        add(pnlBotones, BorderLayout.SOUTH);
+        pnlBotones.add(btnCerrar);
+        
+        add(pnlBotones, BorderLayout.NORTH);
 
         // Vinculación de eventos
         btnReg.addActionListener(e -> registrarCliente());
@@ -95,11 +125,14 @@ public class VentanaClientes extends JDialog {
         btnList.addActionListener(e -> listarClientes());
         btnListHab.addActionListener(e -> listarClientesHabituales());
         btnListEsp.addActionListener(e -> listarClientesEsporadicos());
-        btnGuardar.addActionListener(e -> guardarYFinalizar());
+        btnGuardar.addActionListener(e -> guardarDatos());
+        btnCerrar.addActionListener(e -> dispose());
 
         cmbTipoCliente.addActionListener(e -> actualizarCamposFidelidad());
-        // Inicializar estado
         actualizarCamposFidelidad();
+        
+        // Cargar clientes al abrir
+        listarClientes();
     }
 
     private void actualizarCamposFidelidad() {
@@ -160,6 +193,12 @@ public class VentanaClientes extends JDialog {
         
         hotel.registrarCliente(nuevo);
         txtAreaOutput.setText("✅ Cliente registrado exitosamente:\n" + nuevo.obtenerNombreCompleto());
+        
+        // Limpiar campos
+        limpiarFormulario();
+        
+        // Refrescar tabla
+        listarClientes();
     }
 
     public void editarCliente() {
@@ -184,46 +223,71 @@ public class VentanaClientes extends JDialog {
                 c.asignarFidelidad(new ClienteEsporadico());
             }
 
-            // Persistimos el cambio
             hotel.modificarCliente(c);
             txtAreaOutput.setText("✅ Datos de contacto y fidelidad actualizados para: " + c.obtenerNombreCompleto());
+            limpiarFormulario();
+            listarClientes();
         } else {
             JOptionPane.showMessageDialog(this, "Cliente no encontrado.");
         }
     }
 
     public void listarClientes() {
+        // Limpiar tabla
+        modeloTabla.setRowCount(0);
+        
+        List<Cliente> clientes = hotel.getClientes();
         StringBuilder sb = new StringBuilder("=== TODOS LOS CLIENTES REGISTRADOS ===\n\n");
-        for (Cliente c : hotel.getClientes()) {
+        
+        for (Cliente c : clientes) {
+            String fidelidad = c.getFidelidad() != null ? c.getFidelidad().obtenerTipoFidelidad() : "Sin fidelidad";
+            modeloTabla.addRow(new Object[]{
+                c.obtenerIdentificacion(),
+                c.obtenerNombreCompleto(),
+                c.getCorreo(),
+                c.getTelefono(),
+                fidelidad
+            });
+            
             sb.append("ID: ").append(c.obtenerIdentificacion())
               .append(" | Nombre: ").append(c.obtenerNombreCompleto())
-              .append(" | Email: ").append(c.getCorreo());
-            if (c.getFidelidad() != null) {
-                sb.append(" | Fidelidad: ").append(c.getFidelidad().obtenerTipoFidelidad());
-                if (c.getFidelidad() instanceof ClienteHabitual) {
-                    ClienteHabitual ch = (ClienteHabitual) c.getFidelidad();
-                    sb.append(" (Desc: ").append(ch.getPorcentajeDescuento()).append("%)");
-                }
-            }
-            sb.append("\n");
+              .append(" | Email: ").append(c.getCorreo()).append("\n");
         }
+        
         txtAreaOutput.setText(sb.toString());
     }
 
     public void eliminarCliente() {
-        boolean removido = hotel.eliminarCliente(txtId.getText().trim());
+        String id = txtId.getText().trim();
+        if (id.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Ingrese el ID del cliente a eliminar.");
+            return;
+        }
+        
+        boolean removido = hotel.eliminarCliente(id);
         if (removido) {
-            txtAreaOutput.setText("✅ Cliente [" + txtId.getText() + "] eliminado correctamente del sistema.");
-            listarClientes(); // Refrescar componentes de la pantalla
+            txtAreaOutput.setText("✅ Cliente [" + id + "] eliminado correctamente del sistema.");
+            limpiarFormulario();
+            listarClientes();
         } else {
             JOptionPane.showMessageDialog(this, "La identificación ingresada no se encuentra registrada.");
         }
     }
 
     public void listarClientesHabituales() {
+        modeloTabla.setRowCount(0);
         List<Cliente> habituales = hotel.listarClientesHabituales();
         StringBuilder sb = new StringBuilder("=== CLIENTES HABITUALES (Estrategia de Descuento Activa) ===\n\n");
+        
         for (Cliente c : habituales) {
+            modeloTabla.addRow(new Object[]{
+                c.obtenerIdentificacion(),
+                c.obtenerNombreCompleto(),
+                c.getCorreo(),
+                c.getTelefono(),
+                "Habitual"
+            });
+            
             sb.append(" - ").append(c.obtenerNombreCompleto()).append(" (ID: ").append(c.obtenerIdentificacion()).append(")");
             if (c.getFidelidad() instanceof ClienteHabitual) {
                 ClienteHabitual ch = (ClienteHabitual) c.getFidelidad();
@@ -236,36 +300,56 @@ public class VentanaClientes extends JDialog {
     }
 
     public void listarClientesEsporadicos() {
+        modeloTabla.setRowCount(0);
         StringBuilder sb = new StringBuilder("=== CLIENTES ESPORADICOS ===\n\n");
+        
         for (Cliente c : hotel.getClientes()) {
-            // Consideramos esporádicos a los que tengan estrategia ClienteEsporadico o no tengan estrategia
             if (c.getFidelidad() == null || c.getFidelidad() instanceof ClienteEsporadico) {
+                modeloTabla.addRow(new Object[]{
+                    c.obtenerIdentificacion(),
+                    c.obtenerNombreCompleto(),
+                    c.getCorreo(),
+                    c.getTelefono(),
+                    "Esporádico"
+                });
+                
                 sb.append(" - ").append(c.obtenerNombreCompleto()).append(" (ID: ").append(c.obtenerIdentificacion()).append(")\n");
             }
         }
         txtAreaOutput.setText(sb.toString());
     }
 
-    private void guardarYFinalizar() {
-        // Obtener la referencia del diálogo de configuración desde el padre
-        JFrame padre = (JFrame) getOwner();
-        if (padre instanceof SistemaHotelGUI) {
-            // Crear instancia temporal del diálogo para acceder a su método
-            dialogoConfiguracion = new DialogoConfigurarArchivo(padre, "clientes");
-            if (dialogoConfiguracion.estaConfigurado()) {
-                if (dialogoConfiguracion.crearArchivoBinario()) {
-                    txtAreaOutput.setText("✅ ARCHIVO BINARIO CREADO EXITOSAMENTE\n\n" +
-                            "Ubicación: " + dialogoConfiguracion.getRutaArchivo() + "\n" +
-                            "Nombre: " + dialogoConfiguracion.getNombreArchivo() + "\n\n" +
-                            "Todos los datos de clientes han sido guardados.");
-                    JOptionPane.showMessageDialog(this, "Datos guardados correctamente en archivo binario", 
-                            "Éxito", JOptionPane.INFORMATION_MESSAGE);
-                    dispose();
-                } else {
-                    JOptionPane.showMessageDialog(this, "Error al crear archivo binario", 
-                            "Error", JOptionPane.ERROR_MESSAGE);
-                }
+    /**
+     * CAMBIO: Nuevo método para guardar datos
+     * ANTES: Se llamaba DialogoConfigurarArchivo al cerrar
+     * AHORA: Se llama explícitamente cuando el usuario lo solicita
+     * Separa COMPLETAMENTE la persistencia de la UI
+     */
+    private void guardarDatos() {
+        DialogoConfigurarArchivo dialogo = new DialogoConfigurarArchivo(this, "clientes");
+        
+        if (dialogo.estaConfigurado()) {
+            if (dialogo.crearArchivoBinario()) {
+                txtAreaOutput.setText("✅ ARCHIVO BINARIO CREADO EXITOSAMENTE\n\n" +
+                        "Ubicación: " + dialogo.getRutaArchivo() + "\n" +
+                        "Nombre: " + dialogo.getNombreArchivo() + "\n\n" +
+                        "Todos los datos de clientes han sido guardados.");
+                JOptionPane.showMessageDialog(this, "Datos guardados correctamente", 
+                        "Éxito", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this, "Error al crear archivo binario", 
+                        "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
+    }
+
+    private void limpiarFormulario() {
+        txtId.setText("");
+        txtNombre.setText("");
+        txtCorreo.setText("");
+        txtTelefono.setText("");
+        txtPorcentajeDescuento.setText("10");
+        spnPuntos.setValue(0);
+        cmbTipoCliente.setSelectedIndex(0);
     }
 }
