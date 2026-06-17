@@ -8,16 +8,12 @@ import java.awt.*;
 
 public class SistemaHotelGUI extends JFrame {
     private Hotel hotel;
-    private String rutaClientesActual = "";
-    private String rutaHabitacionesActual = "";
-    private String rutaReservasActual = "";
-    private String rutaServiciosActual = "";
 
     public SistemaHotelGUI() {
         // Inicializamos el hotel con datos informativos estándar
         this.hotel = new Hotel("H001", "Hotel Gran Estancia", "Av. Principal 123", "555-0199");
         
-        // Crear estructura de carpetas externa al iniciar
+        // Crear estructura de carpetas externa al iniciar (sin bloquear UI)
         GestorArchivos.crearEstructuraCarpetas();
         
         configurarVentana();
@@ -84,6 +80,7 @@ public class SistemaHotelGUI extends JFrame {
         add(pnlSettings, BorderLayout.SOUTH);
 
         // Listeners vinculados estrictamente a los métodos obligatorios del UML
+        // CAMBIO: Ahora abren directamente la ventana sin DialogoConfigurarArchivo
         btnClientes.addActionListener(e -> abrirGestionClientes());
         btnHabitaciones.addActionListener(e -> abrirGestionHabitaciones());
         btnReservas.addActionListener(e -> abrirGestionReservas());
@@ -112,72 +109,45 @@ public class SistemaHotelGUI extends JFrame {
 
     // --- MÉTODOS EXIGIDOS POR EL DIAGRAMA UML ---
 
+    /**
+     * CAMBIO: Eliminar DialogoConfigurarArchivo de aquí
+     * Ahora solo abre VentanaClientes directamente
+     * La persistencia se maneja dentro de VentanaClientes cuando el usuario lo solicita
+     */
     public void abrirGestionClientes() {
-        // Mostrar diálogo de configuración
-        DialogoConfigurarArchivo dialogo = new DialogoConfigurarArchivo(this, "Clientes");
-        
-        if (dialogo.estaConfigurado()) {
-            rutaClientesActual = dialogo.getRutaArchivo();
-            GestorArchivos.registrarMovimiento("ABRIR_GESTION", "Gestión de Clientes");
-            
-            VentanaClientes vClientes = new VentanaClientes(this, hotel, rutaClientesActual);
-            vClientes.setVisible(true);
-        } else {
-            JOptionPane.showMessageDialog(this, 
-                "⚠️ Operación cancelada. No se configuró el archivo de clientes.",
-                "Operación Cancelada", JOptionPane.WARNING_MESSAGE);
-        }
+        GestorArchivos.registrarMovimiento("ABRIR_GESTION", "Gestión de Clientes");
+        VentanaClientes vClientes = new VentanaClientes(this, hotel);
+        vClientes.setVisible(true);
     }
 
+    /**
+     * CAMBIO: Eliminar DialogoConfigurarArchivo de aquí
+     * Ahora solo abre VentanaHabitaciones directamente
+     */
     public void abrirGestionHabitaciones() {
-        // Mostrar diálogo de configuración
-        DialogoConfigurarArchivo dialogo = new DialogoConfigurarArchivo(this, "Habitaciones");
-        
-        if (dialogo.estaConfigurado()) {
-            rutaHabitacionesActual = dialogo.getRutaArchivo();
-            GestorArchivos.registrarMovimiento("ABRIR_GESTION", "Gestión de Habitaciones");
-            
-            VentanaHabitaciones vHabitaciones = new VentanaHabitaciones(this, hotel, rutaHabitacionesActual);
-            vHabitaciones.setVisible(true);
-        } else {
-            JOptionPane.showMessageDialog(this, 
-                "⚠️ Operación cancelada. No se configuró el archivo de habitaciones.",
-                "Operación Cancelada", JOptionPane.WARNING_MESSAGE);
-        }
+        GestorArchivos.registrarMovimiento("ABRIR_GESTION", "Gestión de Habitaciones");
+        VentanaHabitaciones vHabitaciones = new VentanaHabitaciones(this, hotel);
+        vHabitaciones.setVisible(true);
     }
 
+    /**
+     * CAMBIO: Eliminar DialogoConfigurarArchivo de aquí
+     * Ahora solo abre VentanaReservas directamente
+     */
     public void abrirGestionReservas() {
-        // Mostrar diálogo de configuración
-        DialogoConfigurarArchivo dialogo = new DialogoConfigurarArchivo(this, "Reservas");
-        
-        if (dialogo.estaConfigurado()) {
-            rutaReservasActual = dialogo.getRutaArchivo();
-            GestorArchivos.registrarMovimiento("ABRIR_GESTION", "Gestión de Reservas");
-            
-            VentanaReservas vReservas = new VentanaReservas(this, hotel, rutaReservasActual);
-            vReservas.setVisible(true);
-        } else {
-            JOptionPane.showMessageDialog(this, 
-                "⚠️ Operación cancelada. No se configuró el archivo de reservas.",
-                "Operación Cancelada", JOptionPane.WARNING_MESSAGE);
-        }
+        GestorArchivos.registrarMovimiento("ABRIR_GESTION", "Gestión de Reservas");
+        VentanaReservas vReservas = new VentanaReservas(this, hotel);
+        vReservas.setVisible(true);
     }
 
+    /**
+     * CAMBIO: Eliminar DialogoConfigurarArchivo de aquí
+     * Ahora solo abre VentanaServicios directamente
+     */
     public void abrirGestionServicios() {
-        // Mostrar diálogo de configuración
-        DialogoConfigurarArchivo dialogo = new DialogoConfigurarArchivo(this, "Servicios");
-        
-        if (dialogo.estaConfigurado()) {
-            rutaServiciosActual = dialogo.getRutaArchivo();
-            GestorArchivos.registrarMovimiento("ABRIR_GESTION", "Gestión de Servicios");
-            
-            VentanaServicios vServicios = new VentanaServicios(this, hotel, rutaServiciosActual);
-            vServicios.setVisible(true);
-        } else {
-            JOptionPane.showMessageDialog(this, 
-                "⚠️ Operación cancelada. No se configuró el archivo de servicios.",
-                "Operación Cancelada", JOptionPane.WARNING_MESSAGE);
-        }
+        GestorArchivos.registrarMovimiento("ABRIR_GESTION", "Gestión de Servicios");
+        VentanaServicios vServicios = new VentanaServicios(this, hotel);
+        vServicios.setVisible(true);
     }
 
     public void abrirFacturacion() {
@@ -190,12 +160,6 @@ public class SistemaHotelGUI extends JFrame {
         SwingUtilities.invokeLater(() -> {
             SistemaHotelGUI gui = new SistemaHotelGUI();
             gui.setVisible(true);
-            JOptionPane.showMessageDialog(gui, 
-                "✅ Sistema Iniciado\n\n" +
-                "📁 Carpeta de datos: " + GestorArchivos.getRutaBase() + "\n" +
-                "📝 Los logs se guardarán en: " + GestorArchivos.getRutaLogs() + "\n\n" +
-                "💡 Haz clic en cualquier gestión para configurar sus archivos.",
-                "Bienvenido", JOptionPane.INFORMATION_MESSAGE);
         });
     }
 }
